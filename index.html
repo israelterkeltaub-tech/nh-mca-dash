@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NH MCA Dash</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="top-row">
+        <div>
+          <h1>NH MCA Dash</h1>
+          <p>MCA underwriting review workspace for incoming submissions and parsed statements.</p>
+        </div>
+        <div class="toolbar">
+        <button class="outline" id="seedDemoBtn" type="button">Load demo submission</button>
+        </div>
+      </header>
+
+      <div class="layout">
+        <aside class="panel sidebar">
+          <div class="queue-sidebar-head">
+            <div>
+              <h2>Incoming queue</h2>
+              <p class="muted">Primary entry is Gmail labels (IT ISO).</p>
+            </div>
+            <button id="manualDealBtn" class="outline tiny" type="button">Manual add submission</button>
+          </div>
+
+          <div id="manualDealPanel" class="stack hidden">
+            <form id="dealForm" class="stack">
+              <h2>Manual submission entry</h2>
+              <label>
+                <span>Merchant name</span>
+                <input id="merchantInput" type="text" placeholder="Acme Electronics LLC" required />
+              </label>
+              <label>
+                <span>Gmail subject</span>
+                <input id="subjectInput" type="text" placeholder="IT ISO — New MCA submission" />
+              </label>
+              <label>
+                <span>Gmail labels (comma separated)</span>
+                <input id="labelsInput" type="text" placeholder="INBOX, IT ISO, NEW DEAL" />
+              </label>
+              <label>
+                <span>ISO source</span>
+                <input id="fromInput" type="text" placeholder="broker@partner.com" />
+              </label>
+              <label class="inline">
+                <input id="isMineInput" type="checkbox" />
+                <span>Mark as mine (IT ISO)</span>
+              </label>
+              <label>
+                <span>Starting status</span>
+                <select id="statusInput">
+                  <option value="review">review</option>
+                  <option value="declined">declined</option>
+                  <option value="offered">offered</option>
+                  <option value="accepted">accepted</option>
+                  <option value="funded">funded</option>
+                </select>
+              </label>
+                <button class="primary" type="submit">Save manual submission</button>
+            </form>
+          </div>
+
+          <div class="stack">
+            <h2>Submissions</h2>
+            <div id="dealList" class="deal-list"></div>
+          </div>
+        </aside>
+
+        <main class="panel">
+          <section id="noDealState" class="empty-state">
+            <h2>No submission open</h2>
+            <p>Select a submission from the queue, then load statement months and review parsing.</p>
+          </section>
+
+          <section id="dealWorkspace" class="stack hidden">
+            <header class="deal-head">
+              <div>
+                <h2 id="dealMerchant">Merchant</h2>
+                <p id="dealSubject"></p>
+              </div>
+              <div class="deal-meta">
+                <span id="mineBadge" class="badge">not marked mine</span>
+                <label class="inline">
+                  <span>Status</span>
+                  <select id="dealStatus">
+                    <option value="review">review</option>
+                    <option value="declined">declined</option>
+                    <option value="offered">offered</option>
+                    <option value="accepted">accepted</option>
+                    <option value="funded">funded</option>
+                  </select>
+                </label>
+              </div>
+            </header>
+
+            <form id="statementForm" class="stack">
+              <h2>Add statement / document</h2>
+              <div class="grid-two">
+                <label>
+                  <span>Month</span>
+                  <input id="monthInput" type="month" required />
+                </label>
+                <label>
+                  <span>Account label (optional)</span>
+                  <input id="accountInput" type="text" placeholder="Main checking" />
+                </label>
+              </div>
+              <label>
+                <span>Upload statement text/CSV</span>
+                <input id="statementFile" type="file" accept=".txt,.csv" />
+              </label>
+              <label>
+                <span>Or paste OCR text</span>
+                <textarea id="statementText" rows="5" placeholder="Paste statement text including date, description, and amounts, or copy summary lines exactly from OCR output."></textarea>
+              </label>
+              <button class="primary" type="submit">Attach statement</button>
+            </form>
+
+            <section>
+              <h2>Statement months</h2>
+              <div id="monthTabs" class="tabs"></div>
+            </section>
+
+            <section id="selectedMonthSection" class="stack hidden">
+              <div class="grid-three summary-grid">
+                <div class="small-card">
+                  <h3>Parsing integrity</h3>
+                  <div id="summaryCompare"></div>
+                </div>
+                <div class="small-card">
+                  <h3>Category risk totals</h3>
+                  <div id="categoryTotals"></div>
+                </div>
+                <div class="small-card">
+                  <h3>Data source</h3>
+                  <div id="monthDocList"></div>
+                </div>
+              </div>
+
+              <div>
+                <h2>Transactions</h2>
+                <p class="hint">Click a category to filter. Edit a transaction category if it looks wrong; the app records your correction for future statements.</p>
+                <div id="categoryFilters" class="chips"></div>
+              </div>
+
+              <div class="tx-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Description</th>
+                      <th>Amount</th>
+                      <th>Category</th>
+                    </tr>
+                  </thead>
+                  <tbody id="txRows"></tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+  </body>
+</html>

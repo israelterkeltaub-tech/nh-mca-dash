@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: NH MCA Dash backend API and compute helpers
+
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    Timeout: 30
+    MemorySize: 512
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        NODE_OPTIONS: --enable-source-maps
+
+Resources:
+  ParseStatementFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: NhMcaDashParseStatement
+      Handler: src/parse-statement.handler
+      CodeUri: .
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Events:
+        ParseStatementApi:
+          Type: Api
+          Properties:
+            Path: /api/statements/parse
+            Method: post
+
+  GmailIngestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: NhMcaDashGmailIngest
+      Handler: src/ingest-gmail.handler
+      CodeUri: .
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Events:
+        IngestApi:
+          Type: Api
+          Properties:
+            Path: /api/gmail/normalize
+            Method: post
+
+  BackendApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Cors:
+        AllowMethods: "'GET,POST,OPTIONS'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
+        MaxAge: "'300'"
+
+Outputs:
+  ParseStatementApi:
+    Description: Parse statement endpoint
+    Value: !Sub "https://${BackendApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/api/statements/parse"
+  GmailIngestApi:
+    Description: Gmail normalize endpoint
+    Value: !Sub "https://${BackendApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/api/gmail/normalize"

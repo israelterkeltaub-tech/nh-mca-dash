@@ -1,0 +1,14 @@
+{
+  "messageId": "gmail-msg-001",
+  "subject": "IT ISO - New MCA submission - Acme Bistro LLC",
+  "from": "broker@partner-iso.com",
+  "labels": "INBOX, IT ISO, NEW DEAL",
+  "bodyText": "Acme Bistro LLC has submitted June-August statements and application.",
+  "attachments": [
+    {
+      "fileName": "june_statement.txt",
+      "monthHint": "2026-06",
+      "text": "Beginning Balance 1,200.00\nTotal Credits 2,430.00\nTotal Debits 1,980.00\nEnding Balance 1,650.00\n06/01 check deposit 1,200.00\n06/05 Acme POS Sales - July Invoice 1,050.00\n06/10 Grocery Store Meal 32.00"
+    }
+  ]
+}

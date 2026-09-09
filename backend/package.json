@@ -1,0 +1,22 @@
+{
+  "name": "nh-mca-dash-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Backend services for NH MCA Dash: Gmail ingestion + statement parsing + categorization.",
+  "type": "module",
+  "scripts": {
+    "dev": "node src/local-server.mjs",
+    "lint": "node --check src/*.mjs src/**/*.mjs",
+    "build": "sam build",
+    "deploy": "sam deploy --guided"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.720.0",
+    "dotenv": "^16.5.0",
+    "googleapis": "^142.0.0",
+    "openai": "^4.85.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
