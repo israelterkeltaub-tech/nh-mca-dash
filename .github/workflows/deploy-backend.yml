@@ -1,0 +1,33 @@
+name: Deploy NH MCA Dash backend
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy-backend:
+    name: Deploy SAM backend
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-2' }}
+
+      - name: Install SAM CLI
+        uses: aws-actions/setup-sam@v2
+
+      - name: Deploy
+        working-directory: backend
+        run: |
+          sam build
+          sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --capabilities CAPABILITY_IAM --resolve-s3 --stack-name nh-mca-dash --region ${{ secrets.AWS_REGION || 'us-east-2' }}
