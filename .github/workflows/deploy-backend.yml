@@ -9,7 +9,7 @@ on:
 jobs:
   deploy-backend:
     name: Deploy SAM backend
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
@@ -21,19 +21,19 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION || 'us-east-2' }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
 
       - name: Recover managed SAM stack
         run: |
-          $region = '${{ secrets.AWS_REGION || 'us-east-2' }}'
-          $managedStack = 'aws-sam-cli-managed-default'
-          $status = aws cloudformation describe-stacks --region $region --stack-name $managedStack --query 'Stacks[0].StackStatus' --output text 2>$null
-          if ($LASTEXITCODE -eq 0 -and $status -eq 'REVIEW_IN_PROGRESS') {
-            Write-Output \"Deleting stuck stack '$managedStack' in $region...\"
-            aws cloudformation delete-stack --region $region --stack-name $managedStack
-            aws cloudformation wait stack-delete-complete --region $region --stack-name $managedStack
-            Write-Output \"Deleted '$managedStack'.\"
-          }
+          region='${{ secrets.AWS_REGION || 'us-east-1' }}'
+          managed_stack='aws-sam-cli-managed-default'
+          status=$(aws cloudformation describe-stacks --region "$region" --stack-name "$managed_stack" --query 'Stacks[0].StackStatus' --output text 2>/dev/null || echo MISSING)
+          if [[ "$status" == "REVIEW_IN_PROGRESS" ]]; then
+            echo "Deleting stuck stack '$managed_stack' in $region..."
+            aws cloudformation delete-stack --region "$region" --stack-name "$managed_stack"
+            aws cloudformation wait stack-delete-complete --region "$region" --stack-name "$managed_stack"
+            echo "Deleted '$managed_stack'."
+          fi
 
       - name: Install SAM CLI
         uses: aws-actions/setup-sam@v2
@@ -42,4 +42,4 @@ jobs:
         working-directory: backend
         run: |
           sam build --template-file sam-template.yaml
-          sam deploy --template-file sam-template.yaml --no-confirm-changeset --no-fail-on-empty-changeset --capabilities CAPABILITY_IAM --resolve-s3 --stack-name nh-mca-dash --region ${{ secrets.AWS_REGION || 'us-east-2' }}
+          sam deploy --template-file sam-template.yaml --no-confirm-changeset --no-fail-on-empty-changeset --capabilities CAPABILITY_IAM --resolve-s3 --stack-name nh-mca-dash --region ${{ secrets.AWS_REGION || 'us-east-1' }}
