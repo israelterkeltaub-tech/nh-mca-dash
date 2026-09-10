@@ -23,6 +23,18 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION || 'us-east-2' }}
 
+      - name: Recover managed SAM stack
+        run: |
+          $region = '${{ secrets.AWS_REGION || 'us-east-2' }}'
+          $managedStack = 'aws-sam-cli-managed-default'
+          $status = aws cloudformation describe-stacks --region $region --stack-name $managedStack --query 'Stacks[0].StackStatus' --output text 2>$null
+          if ($LASTEXITCODE -eq 0 -and $status -eq 'REVIEW_IN_PROGRESS') {
+            Write-Output \"Deleting stuck stack '$managedStack' in $region...\"
+            aws cloudformation delete-stack --region $region --stack-name $managedStack
+            aws cloudformation wait stack-delete-complete --region $region --stack-name $managedStack
+            Write-Output \"Deleted '$managedStack'.\"
+          }
+
       - name: Install SAM CLI
         uses: aws-actions/setup-sam@v2
 
