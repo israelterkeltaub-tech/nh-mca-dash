@@ -35,11 +35,21 @@ jobs:
             echo "Deleted '$managed_stack'."
           fi
 
-      - name: Install SAM CLI
-        uses: aws-actions/setup-sam@v2
-
-      - name: Deploy
+      - name: Ensure artifact bucket exists
         working-directory: backend
         run: |
-          sam build --template-file sam-template.yaml
-          sam deploy --template-file sam-template.yaml --no-confirm-changeset --no-fail-on-empty-changeset --capabilities CAPABILITY_IAM --resolve-s3 --stack-name nh-mca-dash --region ${{ secrets.AWS_REGION || 'us-east-1' }}
+          bucket="${{ secrets.AWS_FRONTEND_BUCKET || 'nh-mca-dash-frontend' }}"
+          if ! aws s3 ls "s3://$bucket" >/dev/null 2>&1; then
+            aws s3 mb "s3://$bucket" --region "${{ secrets.AWS_REGION || 'us-east-1' }}"
+          fi
+          aws cloudformation package \
+            --template-file sam-template.yaml \
+            --s3-bucket "$bucket" \
+            --output-template-file packaged-template.yaml \
+            --region "${{ secrets.AWS_REGION || 'us-east-1' }}"
+          aws cloudformation deploy \
+            --template-file packaged-template.yaml \
+            --stack-name nh-mca-dash \
+            --capabilities CAPABILITY_IAM \
+            --no-fail-on-empty-changeset \
+            --region "${{ secrets.AWS_REGION || 'us-east-1' }}"
