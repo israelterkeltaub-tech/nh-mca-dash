@@ -97,6 +97,34 @@ Set these at minimum:
 
 If you want to move to production persistence, set DynamoDB and extend handlers to persist to `DYNAMO_DEALS_TABLE`.
 
+## AWS frontend deployment (public URL)
+
+This project now includes a GitHub Action that deploys the front-end (root `index.html`, `styles.css`, `script.js`) to S3 as a public website.
+
+### Required GitHub Secrets
+
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_REGION` (example: `us-east-2`)
+- `AWS_FRONTEND_BUCKET` (must be globally unique, e.g. `nh-mca-dash-ui-<your-org>`)
+
+### One-time setup
+
+1. Go to your repo `Settings` → `Secrets and variables` → `Actions`.
+2. Add the secrets above.
+3. Push to `main` (or use `workflow_dispatch`).
+
+### What happens after first run
+
+- S3 bucket is created if missing.
+- Website hosting config is enabled.
+- Bucket becomes publicly readable.
+- Files are synced to bucket root.
+- GitHub Action output prints your URL in format:
+  `http://<AWS_FRONTEND_BUCKET>.s3-website-<AWS_REGION>.amazonaws.com`
+
+If you’d rather keep the bucket private and use CloudFront, I can switch the workflow next to issue a CloudFront distribution and HTTPS URL.
+
 ## Next underwriting logic pass
 
 - Gmail watch/ingestion pipeline to auto-create submissions in `review`.

@@ -1,0 +1,92 @@
+name: Deploy NH MCA Dash frontend
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy-frontend:
+    name: Deploy static front-end to S3
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-2' }}
+
+      - name: Ensure frontend bucket exists
+        id: bucket
+        run: |
+          set -euo pipefail
+
+          BUCKET_NAME="${{ secrets.AWS_FRONTEND_BUCKET }}"
+          AWS_REGION="${{ secrets.AWS_REGION }}"
+
+          if [ -z "$BUCKET_NAME" ]; then
+            echo "AWS_FRONTEND_BUCKET secret is required." >&2
+            exit 1
+          fi
+
+          if [ -z "$AWS_REGION" ]; then
+            AWS_REGION="us-east-2"
+          fi
+
+          if aws s3api head-bucket --bucket "$BUCKET_NAME" >/dev/null 2>&1; then
+            echo "Bucket already exists: $BUCKET_NAME"
+          else
+            echo "Creating bucket: $BUCKET_NAME in $AWS_REGION"
+            if [ "$AWS_REGION" = "us-east-1" ]; then
+              aws s3api create-bucket --bucket "$BUCKET_NAME" --region "$AWS_REGION"
+            else
+              aws s3api create-bucket --bucket "$BUCKET_NAME" --region "$AWS_REGION" --create-bucket-configuration LocationConstraint="$AWS_REGION"
+            fi
+          fi
+
+          aws s3 website "s3://$BUCKET_NAME" --index-document index.html --error-document index.html
+
+          cat > /tmp/public-bucket-policy.json <<EOF
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "PublicReadGetObject",
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::${BUCKET_NAME}/*"
+              }
+            ]
+          }
+          EOF
+
+          aws s3api put-bucket-policy --bucket "$BUCKET_NAME" --policy file:///tmp/public-bucket-policy.json
+
+          echo "bucket_name=$BUCKET_NAME" >> "$GITHUB_OUTPUT"
+          echo "aws_region=$AWS_REGION" >> "$GITHUB_OUTPUT"
+
+      - name: Upload NH MCA Dash front-end files
+        run: |
+          set -euo pipefail
+          BUCKET_NAME="${{ steps.bucket.outputs.bucket_name }}"
+          aws s3 sync . "s3://$BUCKET_NAME/" \
+            --delete \
+            --exclude ".git/*" \
+            --exclude ".github/*" \
+            --exclude "backend/*" \
+            --exclude "README.md" \
+            --exclude "node_modules/*" \
+            --exclude ".tmp-*"
+
+      - name: Output public URL
+        run: |
+          echo "Frontend URL:"
+          echo "http://${{ steps.bucket.outputs.bucket_name }}.s3-website-${{ steps.bucket.outputs.aws_region }}.amazonaws.com"

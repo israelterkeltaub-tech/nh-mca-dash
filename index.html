@@ -10,11 +10,12 @@
     <div class="app-shell">
       <header class="top-row">
         <div>
+          <p class="eyebrow">MCA Underwriting Workspace</p>
           <h1>NH MCA Dash</h1>
-          <p>MCA underwriting review workspace for incoming submissions and parsed statements.</p>
+          <p>Gmail-first CRM queue for quick underwriting review</p>
         </div>
-        <div class="toolbar">
-        <button class="outline" id="seedDemoBtn" type="button">Load demo submission</button>
+        <div class="header-actions">
+          <button class="outline" id="seedDemoBtn" type="button">Load mock sample</button>
         </div>
       </header>
 
@@ -22,10 +23,10 @@
         <aside class="panel sidebar">
           <div class="queue-sidebar-head">
             <div>
-              <h2>Incoming queue</h2>
-              <p class="muted">Primary entry is Gmail labels (IT ISO).</p>
+              <h2>Deal pipeline</h2>
+              <p class="muted">New deals land from Gmail tags (manual add only if needed).</p>
             </div>
-            <button id="manualDealBtn" class="outline tiny" type="button">Manual add submission</button>
+            <button id="manualDealBtn" class="outline tiny" type="button">+ Manual add</button>
           </div>
 
           <div id="manualDealPanel" class="stack hidden">
@@ -61,20 +62,21 @@
                   <option value="funded">funded</option>
                 </select>
               </label>
-                <button class="primary" type="submit">Save manual submission</button>
+              <button class="primary" type="submit">Save manual submission</button>
             </form>
           </div>
 
-          <div class="stack">
-            <h2>Submissions</h2>
-            <div id="dealList" class="deal-list"></div>
+          <div id="noDealsState" class="empty-state">
+            <h2>Waiting for inbound deals</h2>
+            <p>When a tagged submission arrives, it will show here by status. Use manual add only for backfills.</p>
           </div>
+          <div id="crmBoard" class="crm-board" aria-label="Deal board"></div>
         </aside>
 
         <main class="panel">
           <section id="noDealState" class="empty-state">
-            <h2>No submission open</h2>
-            <p>Select a submission from the queue, then load statement months and review parsing.</p>
+            <h2>Select a deal to begin underwriting</h2>
+            <p>Pick a deal from the pipeline, then review monthly statement tabs and correct categories if needed.</p>
           </section>
 
           <section id="dealWorkspace" class="stack hidden">
@@ -82,6 +84,7 @@
               <div>
                 <h2 id="dealMerchant">Merchant</h2>
                 <p id="dealSubject"></p>
+                <p id="dealBroker"></p>
               </div>
               <div class="deal-meta">
                 <span id="mineBadge" class="badge">not marked mine</span>
@@ -99,7 +102,7 @@
             </header>
 
             <form id="statementForm" class="stack">
-              <h2>Add statement / document</h2>
+              <h2>Attach statement / document</h2>
               <div class="grid-two">
                 <label>
                   <span>Month</span>
@@ -118,8 +121,8 @@
                 <span>Or paste OCR text</span>
                 <textarea id="statementText" rows="5" placeholder="Paste statement text including date, description, and amounts, or copy summary lines exactly from OCR output."></textarea>
               </label>
-              <button class="primary" type="submit">Attach statement</button>
-            </form>
+                <button class="primary" type="submit">Attach statement</button>
+              </form>
 
             <section>
               <h2>Statement months</h2>
@@ -129,11 +132,11 @@
             <section id="selectedMonthSection" class="stack hidden">
               <div class="grid-three summary-grid">
                 <div class="small-card">
-                  <h3>Parsing integrity</h3>
+                  <h3>OCR vs parsed check</h3>
                   <div id="summaryCompare"></div>
                 </div>
                 <div class="small-card">
-                  <h3>Category risk totals</h3>
+                  <h3>Category totals</h3>
                   <div id="categoryTotals"></div>
                 </div>
                 <div class="small-card">
@@ -142,11 +145,11 @@
                 </div>
               </div>
 
-              <div>
+              <section>
                 <h2>Transactions</h2>
                 <p class="hint">Click a category to filter. Edit a transaction category if it looks wrong; the app records your correction for future statements.</p>
                 <div id="categoryFilters" class="chips"></div>
-              </div>
+              </section>
 
               <div class="tx-wrap">
                 <table>
@@ -154,6 +157,7 @@
                     <tr>
                       <th>Date</th>
                       <th>Description</th>
+                      <th>Method</th>
                       <th>Amount</th>
                       <th>Category</th>
                     </tr>
