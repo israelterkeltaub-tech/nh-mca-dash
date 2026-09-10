@@ -46,10 +46,14 @@ jobs:
       - name: Ensure artifact bucket exists
         working-directory: backend
         run: |
-          bucket="${{ secrets.AWS_FRONTEND_BUCKET || 'nh-mca-dash-frontend' }}"
+          bucket="${{ secrets.AWS_BACKEND_ARTIFACT_BUCKET || 'nh-mca-dash-backend-artifacts' }}"
           if ! aws s3 ls "s3://$bucket" >/dev/null 2>&1; then
             aws s3 mb "s3://$bucket" --region "${{ secrets.AWS_REGION || 'us-east-1' }}"
           fi
+          aws s3api put-public-access-block \
+            --bucket "$bucket" \
+            --public-access-block-configuration \
+            BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
           aws cloudformation package \
             --template-file sam-template.yaml \
             --s3-bucket "$bucket" \
