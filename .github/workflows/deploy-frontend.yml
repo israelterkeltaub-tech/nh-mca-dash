@@ -40,6 +40,8 @@ jobs:
             AWS_REGION="us-east-2"
           fi
 
+          aws s3api put-public-access-block --bucket "$BUCKET_NAME" --public-access-block-configuration '{"BlockPublicAcls":false,"IgnorePublicAcls":false,"BlockPublicPolicy":false,"RestrictPublicBuckets":false}'
+
           if aws s3api head-bucket --bucket "$BUCKET_NAME" >/dev/null 2>&1; then
             echo "Bucket already exists: $BUCKET_NAME"
           else
