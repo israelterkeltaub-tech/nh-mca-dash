@@ -73,6 +73,9 @@ const RULES = {
 };
 
 const SAMPLE_DEALS_SEEDED_KEY = "nh_mca_dash_demo_seeded_v1";
+const APP_BUCKET = "nh-mca-dash-frontend";
+const APP_REGION = "us-east-1";
+const APP_CLOUDFRONT_URL = "https://dbteh82do9hxg.cloudfront.net";
 
 const state = loadState();
 
@@ -86,10 +89,19 @@ const els = {
   fromInput: document.getElementById("fromInput"),
   isMineInput: document.getElementById("isMineInput"),
   statusInput: document.getElementById("statusInput"),
+  statusSummary: document.getElementById("statusSummary"),
+  pipelineTotals: document.getElementById("pipelineTotals"),
   crmBoard: document.getElementById("crmBoard"),
   noDealsState: document.getElementById("noDealsState"),
   noDealState: document.getElementById("noDealState"),
   dealWorkspace: document.getElementById("dealWorkspace"),
+  profileBtn: document.getElementById("profileBtn"),
+  bucketBtn: document.getElementById("bucketBtn"),
+  settingsBtn: document.getElementById("settingsBtn"),
+  quickPanel: document.getElementById("quickPanel"),
+  quickPanelTitle: document.getElementById("quickPanelTitle"),
+  quickPanelBody: document.getElementById("quickPanelBody"),
+  quickPanelClose: document.getElementById("quickPanelClose"),
   dealMerchant: document.getElementById("dealMerchant"),
   dealSubject: document.getElementById("dealSubject"),
   dealBroker: document.getElementById("dealBroker"),
@@ -168,6 +180,38 @@ els.dealForm.addEventListener("submit", (event) => {
   clearDealForm();
   persistState();
   render();
+});
+
+els.profileBtn?.addEventListener("click", () => {
+  openQuickPanel("Profile", `
+    <p><strong>Account:</strong> NH MCA Dash</p>
+    <p><strong>Role:</strong> Underwriting Team</p>
+    <p><strong>Current workspace:</strong> NH MCA UW Dash</p>
+  `);
+});
+
+els.bucketBtn?.addEventListener("click", () => {
+  openQuickPanel("Bucket setup", `
+    <p><strong>Frontend bucket:</strong> ${escapeHtml(APP_BUCKET)}</p>
+    <p><strong>CloudFront:</strong> ${escapeHtml(APP_CLOUDFRONT_URL)}</p>
+    <p><strong>Region:</strong> ${escapeHtml(APP_REGION)}</p>
+    <p class="muted">Buckets and distribution are currently configured and live.</p>
+  `);
+});
+
+els.settingsBtn?.addEventListener("click", () => {
+  openQuickPanel("Settings", `
+    <p><strong>CRM workflow:</strong> review → offered → accepted → funded.</p>
+    <p><strong>Manual add:</strong> still available for backfills.</p>
+    <p><strong>Parser labels:</strong> adjust directly in the transaction table.</p>
+    <p class="muted">Backend/ingestion and secure auth are next to wire into this workspace.</p>
+  `);
+});
+
+els.quickPanelClose?.addEventListener("click", () => {
+  if (els.quickPanel) {
+    els.quickPanel.classList.add("hidden");
+  }
 });
 
 els.dealStatus.addEventListener("change", () => {
@@ -334,7 +378,9 @@ function readFile(file) {
 }
 
 function render() {
+  renderStatusSummary();
   renderBoard();
+  renderPipelineTotals();
 
   const deal = currentDeal();
   if (!deal) {
@@ -360,6 +406,55 @@ function render() {
 
   renderMonthTabs(deal);
   renderMonthDetail(deal);
+}
+
+function renderStatusSummary() {
+  const counts = CRM_STATUSES.reduce((result, status) => {
+    result[status] = 0;
+    return result;
+  }, {});
+
+  for (const deal of state.deals) {
+    const status = CRM_STATUSES.includes(deal.status) ? deal.status : "review";
+    counts[status] = (counts[status] || 0) + 1;
+  }
+
+  const total = state.deals.length;
+  if (els.statusSummary) {
+    els.statusSummary.innerHTML = CRM_STATUSES
+      .map((status) => {
+        const readable = STATUS_LABELS[status] || status;
+        const value = counts[status] || 0;
+        return `<article class="status-card">
+          <p class="status-label">${escapeHtml(readable)}</p>
+          <p class="status-value">${value}</p>
+        </article>`;
+      })
+      .concat([`<article class="status-card total"><p class="status-label">Total</p><p class="status-value">${total}</p></article>`])
+      .join("");
+  }
+}
+
+function renderPipelineTotals() {
+  if (!els.pipelineTotals) return;
+
+  const total = state.deals.length;
+  const pending = state.deals.filter((deal) => deal.status === "review").length;
+  const declined = state.deals.filter((deal) => deal.status === "declined").length;
+  const offered = state.deals.filter((deal) => deal.status === "offered").length;
+  const accepted = state.deals.filter((deal) => deal.status === "accepted").length;
+  const funded = state.deals.filter((deal) => deal.status === "funded").length;
+  const mine = state.deals.filter((deal) => deal.isMine).length;
+
+  els.pipelineTotals.innerHTML = `
+    <div><span>${total}</span><small>All deals</small></div>
+    <div><span>${pending}</span><small>In review</small></div>
+    <div><span>${offered}</span><small>Offered</small></div>
+    <div><span>${accepted}</span><small>Accepted</small></div>
+    <div><span>${funded}</span><small>Funded</small></div>
+    <div><span>${declined}</span><small>Declined</small></div>
+    <div><span>${mine}</span><small>My IT ISO</small></div>
+  `;
 }
 
 function renderBoard() {
@@ -392,6 +487,13 @@ function renderBoard() {
   });
 
   els.crmBoard.replaceChildren(...boardNodes);
+}
+
+function openQuickPanel(title, body) {
+  if (!els.quickPanel || !els.quickPanelTitle || !els.quickPanelBody) return;
+  els.quickPanelTitle.innerHTML = escapeHtml(title);
+  els.quickPanelBody.innerHTML = body;
+  els.quickPanel.classList.remove("hidden");
 }
 
 function renderDealCard(deal) {

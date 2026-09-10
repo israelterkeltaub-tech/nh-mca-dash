@@ -15,9 +15,20 @@
           <p>Gmail-first CRM queue for quick underwriting review</p>
         </div>
         <div class="header-actions">
+          <button id="profileBtn" class="ghost tiny" type="button">Profile</button>
+          <button id="bucketBtn" class="outline tiny" type="button">Bucket setup</button>
+          <button id="settingsBtn" class="outline tiny" type="button">Settings</button>
           <button class="outline" id="seedDemoBtn" type="button">Load mock sample</button>
         </div>
       </header>
+      <section id="statusSummary" class="status-summary" aria-live="polite"></section>
+      <section id="quickPanel" class="quick-panel hidden">
+        <header class="quick-panel-head">
+          <p id="quickPanelTitle" class="quick-title"></p>
+          <button id="quickPanelClose" class="ghost tiny" type="button">Close</button>
+        </header>
+        <div id="quickPanelBody" class="quick-body"></div>
+      </section>
 
       <div class="layout">
         <aside class="panel sidebar">
@@ -65,6 +76,11 @@
               <button class="primary" type="submit">Save manual submission</button>
             </form>
           </div>
+          <section class="metric-strip">
+            <h2>Deal queue insight</h2>
+            <div id="pipelineTotals" class="pipeline-totals"></div>
+            <p class="muted">Source defaults: Gmail submissions are auto-parsed, manual add is for backfill only.</p>
+          </section>
 
           <div id="noDealsState" class="empty-state">
             <h2>Waiting for inbound deals</h2>
