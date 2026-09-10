@@ -90,5 +90,28 @@ jobs:
 
       - name: Output public URL
         run: |
-          echo "Frontend URL:"
-          echo "http://${{ steps.bucket.outputs.bucket_name }}.s3-website-${{ steps.bucket.outputs.aws_region }}.amazonaws.com"
+          CF_DOMAIN="${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_DOMAIN }}"
+          CF_DISTRIBUTION="${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }}"
+
+          if [ -n "$CF_DISTRIBUTION" ]; then
+            if aws cloudfront get-distribution --id "$CF_DISTRIBUTION" --query 'Distribution.DomainName' --output text >/dev/null 2>&1; then
+              echo "Frontend URL:"
+              aws cloudfront get-distribution \
+                --id "$CF_DISTRIBUTION" \
+                --query 'Distribution.DomainName' \
+                --output text \
+                | awk '{print "https://" $1}'
+            else
+              echo "Frontend URL:"
+              echo "http://${{ steps.bucket.outputs.bucket_name }}.s3-website-${{ steps.bucket.outputs.aws_region }}.amazonaws.com"
+              echo "Configured CloudFront distribution is not reachable: $CF_DISTRIBUTION"
+            fi
+          else
+            echo "Frontend URL:"
+            echo "http://${{ steps.bucket.outputs.bucket_name }}.s3-website-${{ steps.bucket.outputs.aws_region }}.amazonaws.com"
+          fi
+
+          if [ -n "$CF_DISTRIBUTION" ]; then
+            echo "Creating cache-bust invalidation for CloudFront distribution."
+            aws cloudfront create-invalidation --distribution-id "$CF_DISTRIBUTION" --paths "/*"
+          fi
