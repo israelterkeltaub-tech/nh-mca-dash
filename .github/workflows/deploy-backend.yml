@@ -29,5 +29,5 @@ jobs:
       - name: Deploy
         working-directory: backend
         run: |
-          sam build
-          sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --capabilities CAPABILITY_IAM --resolve-s3 --stack-name nh-mca-dash --region ${{ secrets.AWS_REGION || 'us-east-2' }}
+          sam build --template-file sam-template.yaml
+          sam deploy --template-file sam-template.yaml --no-confirm-changeset --no-fail-on-empty-changeset --capabilities CAPABILITY_IAM --resolve-s3 --stack-name nh-mca-dash --region ${{ secrets.AWS_REGION || 'us-east-2' }}
